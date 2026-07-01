@@ -43,16 +43,6 @@ class SubscriptionEditorWizard(models.TransientModel):
         order = self.order_id
         order._check_subscription_editable()
 
-        # Validar que no haya facturas pagadas
-        paid_invoices = order.invoice_ids.filtered(
-            lambda inv: inv.state == "posted" and inv.payment_state in ("paid", "in_payment", "partial")
-        )
-        if paid_invoices:
-            raise UserError(_(
-                "No se puede editar la suscripción %s porque tiene facturas pagadas o en proceso de pago: %s",
-                order.name, ", ".join(paid_invoices.mapped("name"))
-            ))
-
     def _cancel_draft_invoices(self):
         """Cancela las facturas en borrador asociadas a la suscripción."""
         self.ensure_one()

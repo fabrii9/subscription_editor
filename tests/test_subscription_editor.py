@@ -164,14 +164,18 @@ class TestSubscriptionEditor(TransactionCase):
         invoiced_line = order.order_line.filtered(lambda l: l.product_id == self.product_c)
         self.assertEqual(invoiced_line.price_unit, 60.0)
 
-    def test_block_if_paid_invoice(self):
-        """Prueba que no se pueda editar si hay una factura pagada."""
+    def test_edit_with_paid_invoice(self):
+        """Prueba que se pueda editar el precio aunque haya facturas pagadas."""
         order = self._create_confirmed_subscription()
         invoice = order.with_context(recurring_automatic=True)._create_invoices(final=True)
         invoice.action_post()
-        # Simular pago asignando payment_state (no es posible en compute real,
-        # pero validamos que el bloqueo funciona si payment_state es paid)
+        # Simular pago asignando payment_state
         invoice.payment_state = "paid"
 
-        with self.assertRaises(UserError):
-            order.action_open_subscription_editor()
+        wizard = self._open_editor(order)
+        wizard.line_ids.price_unit = 150.0
+        wizard.action_apply_changes()
+
+        order.invalidate_recordset()
+        self.assertEqual(order.order_line.price_unit, 150.0)
+        self.assertEqual(order.recurring_monthly, 150.0)

@@ -50,16 +50,6 @@ class SaleOrder(models.Model):
         if not self._can_edit_subscription():
             raise UserError(_("No tienes permiso para editar suscripciones activas."))
 
-        # Validar que no haya facturas pagadas
-        paid_invoices = self.invoice_ids.filtered(
-            lambda inv: inv.state == "posted" and inv.payment_state in ("paid", "in_payment", "partial")
-        )
-        if paid_invoices:
-            raise UserError(_(
-                "No se puede editar la suscripción %s porque tiene facturas pagadas o en proceso de pago: %s",
-                self.name, ", ".join(paid_invoices.mapped("name"))
-            ))
-
         # Precargar líneas existentes en el wizard
         line_vals = []
         for line in self.order_line:
