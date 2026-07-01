@@ -167,7 +167,8 @@ class SubscriptionEditorWizard(models.TransientModel):
             order.currency_id.format(new_mrr),
         )
         if cancelled_invoices:
-            changes_summary += _(" Facturas en borrador canceladas: %s", ", ".join(cancelled_invoices.mapped("name")))
+            invoice_names = [name or _("(sin nombre)") for name in cancelled_invoices.mapped("name")]
+            changes_summary += _(" Facturas en borrador canceladas: %s", ", ".join(invoice_names))
         order.message_post(body=changes_summary)
 
         # Regenerar factura en borrador si había una cancelada
