@@ -140,16 +140,15 @@ class SubscriptionEditorWizard(models.TransientModel):
                 vals["order_id"] = order.id
                 self.env["sale.order.line"].create(vals)
 
-        # Eliminar líneas originales que no estén en el wizard y no estén facturadas
+        # Eliminar líneas originales que el usuario sacó del wizard, solo si no están
+        # facturadas/entregadas. Las líneas con facturación o entrega se mantienen para
+        # no romper la integridad contable/logística.
         lines_to_remove = order.order_line.filtered(
             lambda line: line.id in original_line_ids and line.id not in updated_line_ids
         )
-        for line in lines_to_remove:
-            if line.qty_invoiced > 0 or line.qty_delivered > 0 or line.is_downpayment:
-                raise UserError(_(
-                    "No se puede eliminar la línea '%s' porque ya tiene cantidad facturada o entregada.",
-                    line.name
-                ))
+        lines_to_remove = lines_to_remove.filtered(
+            lambda line: line.qty_invoiced <= 0 and line.qty_delivered <= 0 and not line.is_downpayment
+        )
         lines_to_remove.unlink()
 
         # Recomputar totales y MRR

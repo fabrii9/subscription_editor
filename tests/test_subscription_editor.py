@@ -130,6 +130,40 @@ class TestSubscriptionEditor(TransactionCase):
         self.assertEqual(len(order.order_line), 1)
         self.assertEqual(order.recurring_monthly, 100.0)
 
+    def test_remove_invoiced_line_keeps_line(self):
+        """Si una línea facturada desaparece del wizard, no se elimina ni falla."""
+        order = self._create_confirmed_subscription()
+        # Agregar segunda línea
+        wizard = self._open_editor(order)
+        self.env["subscription.editor.wizard.line"].create({
+            "wizard_id": wizard.id,
+            "product_id": self.product_c.id,
+            "name": self.product_c.name,
+            "product_uom_qty": 1.0,
+            "product_uom_id": self.product_c.uom_id.id,
+            "price_unit": 50.0,
+            "sequence": 20,
+        })
+        wizard.action_apply_changes()
+
+        # Facturar la segunda línea (sin pagar)
+        order.invalidate_recordset()
+        invoice = order.with_context(recurring_automatic=True)._create_invoices(final=True)
+        invoice.action_post()
+        order.invalidate_recordset()
+        self.assertGreater(order.order_line.filtered(lambda l: l.product_id == self.product_c).qty_invoiced, 0)
+
+        # Intentar editar: el wizard no debería fallar aunque la línea facturada esté presente
+        wizard = self._open_editor(order)
+        # Simular que la línea facturada no se editó (no debería intentar borrarse)
+        wizard.line_ids.filtered(lambda l: l.product_id == self.product_c).price_unit = 60.0
+        wizard.action_apply_changes()
+
+        order.invalidate_recordset()
+        self.assertEqual(len(order.order_line), 2)
+        invoiced_line = order.order_line.filtered(lambda l: l.product_id == self.product_c)
+        self.assertEqual(invoiced_line.price_unit, 60.0)
+
     def test_block_if_paid_invoice(self):
         """Prueba que no se pueda editar si hay una factura pagada."""
         order = self._create_confirmed_subscription()
