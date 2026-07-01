@@ -101,22 +101,30 @@ class SubscriptionEditorWizard(models.TransientModel):
 
         # Actualizar líneas existentes
         for wizard_line in self.line_ids:
-            if wizard_line.display_type and not wizard_line.product_id:
-                # Línea de sección o nota
+            if wizard_line.display_type:
+                # Línea no contable: sección, nota o descuento de suscripción
+                section_vals = {
+                    "name": wizard_line.name,
+                    "sequence": wizard_line.sequence,
+                    "display_type": wizard_line.display_type,
+                    "product_id": False,
+                    "product_uom_id": False,
+                    "product_uom_qty": 0,
+                    "price_unit": 0,
+                    "discount": 0,
+                    "tax_ids": [(5, 0, 0)],
+                    "customer_lead": 0,
+                }
                 if wizard_line.sale_line_id:
-                    wizard_line.sale_line_id.write({
-                        "name": wizard_line.name,
-                        "sequence": wizard_line.sequence,
-                        "display_type": wizard_line.display_type,
-                    })
+                    wizard_line.sale_line_id.write(section_vals)
                     updated_line_ids.add(wizard_line.sale_line_id.id)
                 else:
-                    self.env["sale.order.line"].create({
-                        "order_id": order.id,
-                        "name": wizard_line.name,
-                        "sequence": wizard_line.sequence,
-                        "display_type": wizard_line.display_type,
-                    })
+                    section_vals["order_id"] = order.id
+                    self.env["sale.order.line"].create(section_vals)
+                continue
+
+            if not wizard_line.product_id:
+                # Línea vacía sin producto ni tipo: la ignoramos
                 continue
 
             if wizard_line.sale_line_id:
@@ -186,6 +194,7 @@ class SubscriptionEditorWizardLine(models.TransientModel):
         selection=[
             ("line_section", "Sección"),
             ("line_note", "Nota"),
+            ("subscription_discount", "Descuento de suscripción"),
         ],
         string="Tipo de línea",
     )
