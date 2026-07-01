@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="sale_subscription_order_view_form_inherit_editor" model="ir.ui.view">
+        <field name="name">sale.subscription.order.form.inherit.editor</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale_subscription.sale_subscription_order_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Campo técnico para controlar permisos en la vista -->
+            <field name="state" position="after">
+                <field name="can_edit_subscription" invisible="1"/>
+            </field>
+
+            <!-- Botón para abrir el editor de suscripción -->
+            <button name="prepare_upsell_order" position="after">
+                <button string="Editar Suscripción"
+                        name="action_open_subscription_editor"
+                        type="object"
+                        groups="subscription_editor.group_subscription_editor"
+                        invisible="not is_subscription or subscription_state not in ['3_progress', '4_paused'] or state != 'sale'"
+                        data-hotkey="e"/>
+            </button>
+
+            <!-- Hacer campos de cabecera editables para el grupo editor -->
+            <field name="next_invoice_date" position="attributes">
+                <attribute name="readonly">subscription_state not in ['3_progress', '4_paused'] or not can_edit_subscription</attribute>
+            </field>
+
+            <field name="start_date" position="attributes">
+                <attribute name="readonly">subscription_state == '2_renewal' or not can_edit_subscription</attribute>
+            </field>
+
+            <field name="plan_id" position="attributes">
+                <attribute name="readonly">subscription_state == '7_upsell' or not can_edit_subscription</attribute>
+            </field>
+
+            <!-- Campo técnico en líneas -->
+            <xpath expr="//field[@name='order_line']//list" position="inside">
+                <field name="can_edit_subscription_line" invisible="1"/>
+            </xpath>
+
+            <!-- Hacer campos de líneas editables para el grupo editor -->
+            <xpath expr="//field[@name='order_line']//list//field[@name='product_id']" position="attributes">
+                <attribute name="readonly">not product_updatable and not can_edit_subscription_line</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']//list//field[@name='product_template_id']" position="attributes">
+                <attribute name="readonly">id and not product_updatable and not can_edit_subscription_line</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']//list//field[@name='price_unit']" position="attributes">
+                <attribute name="readonly">qty_invoiced &gt; 0 and not can_edit_subscription_line</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']//list//field[@name='tax_ids']" position="attributes">
+                <attribute name="readonly">(qty_invoiced &gt; 0 or is_downpayment) and not can_edit_subscription_line</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

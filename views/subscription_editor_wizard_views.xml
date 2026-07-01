@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="subscription_editor_wizard_form_view" model="ir.ui.view">
+        <field name="name">subscription.editor.wizard.form</field>
+        <field name="model">subscription.editor.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Editar Suscripción">
+                <sheet>
+                    <group>
+                        <field name="order_id" readonly="1" options="{'no_open': True}"/>
+                        <field name="cancel_draft_invoices"/>
+                    </group>
+                    <field name="line_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="display_type" optional="show"/>
+                            <field name="product_id" optional="show"/>
+                            <field name="name" optional="show"/>
+                            <field name="product_uom_qty" optional="show"/>
+                            <field name="product_uom_id" optional="show" options="{'no_create': True}"/>
+                            <field name="price_unit" optional="show"/>
+                            <field name="discount" optional="show"/>
+                            <field name="tax_ids" optional="show" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="sale_line_id" invisible="1"/>
+                        </list>
+                    </field>
+                </sheet>
+                <footer>
+                    <button string="Aplicar cambios" name="action_apply_changes" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

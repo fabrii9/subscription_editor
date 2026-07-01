@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_subscription_editor" model="res.groups">
+        <field name="name">Subscription Editor</field>
+        <field name="sequence">35</field>
+        <field name="privilege_id" ref="sales_team.res_groups_privilege_sales"/>
+        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_manager'))]"/>
+        <field name="comment">Permite editar suscripciones activas, cambiar productos, precios y líneas.</field>
+        <field name="user_ids" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+</odoo>
