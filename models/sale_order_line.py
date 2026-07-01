@@ -34,3 +34,10 @@ class SaleOrderLine(models.Model):
         for line in self:
             if line.can_edit_subscription_line:
                 line.product_updatable = True
+
+    def _check_line_unlink(self):
+        """Permite eliminar líneas de suscripción editables para el grupo de editor."""
+        undeletable_lines = super()._check_line_unlink()
+        if self.env.user.has_group("subscription_editor.group_subscription_editor"):
+            return undeletable_lines - self.filtered(lambda line: line.can_edit_subscription_line)
+        return undeletable_lines
